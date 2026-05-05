@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { TAMIL_WORDS } from '@/lib/constants';
 import { checkRouteAvailability, RouteResponse, TransportCategory, PrivateMode } from '@/lib/routingService';
+import { TRANSPORT_ROUTES } from '@/lib/transportData';
 
 const transportCategories = [
   { id: 'public', label: 'Public Transport', icon: <Bus className="w-5 h-5" />, desc: 'Bus, Metro, Train' },
@@ -36,6 +37,22 @@ export default function TravelPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [routeResult, setRouteResult] = useState<RouteResponse | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+
+  // Timetable State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [timetableFilter, setTimetableFilter] = useState<'all' | 'mtc' | 'local_train'>('all');
+
+  const filteredRoutes = TRANSPORT_ROUTES.filter(route => {
+    const matchesType = timetableFilter === 'all' || route.type === timetableFilter;
+    const matchesSearch = route.number.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          route.from.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          route.to.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesType && matchesSearch;
+  }).sort((a, b) => {
+    const fromCompare = a.from.localeCompare(b.from);
+    if (fromCompare !== 0) return fromCompare;
+    return a.to.localeCompare(b.to);
+  });
 
   useEffect(() => {
     // Detect if user is on a mobile device to correctly format deep links
@@ -211,16 +228,126 @@ export default function TravelPage() {
               <h3 className="text-lg font-bold mb-4">Chennai Transport Guide</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[
-                  { title: 'MTC Bus', desc: 'Metropolitan Transport Corp — covers all of Chennai. Fare: ₹5-₹30', color: 'bg-green-50 text-green-700' },
-                  { title: 'Chennai Metro', desc: '2 lines covering major areas. Fare: ₹10-₹60', color: 'bg-blue-50 text-blue-700' },
-                  { title: 'MRTS', desc: 'Beach to Velachery elevated rail. Fare: ₹5-₹15', color: 'bg-purple-50 text-purple-700' },
-                  { title: 'Suburban Train', desc: 'Southern Railway suburban. Cheapest option.', color: 'bg-amber-50 text-amber-700' },
+                  { 
+                    title: 'Chennai Metro', 
+                    desc: '2 lines covering major areas. Fare: ₹10-₹60', 
+                    color: 'bg-blue-50 text-blue-700',
+                    link: 'https://travelplanner.chennaimetrorail.org/',
+                    linkLabel: 'Official Timing Page',
+                    features: undefined
+                  },
+                  { 
+                    title: 'Local Train', 
+                    desc: 'Southern Railway suburban. Cheapest option.', 
+                    color: 'bg-amber-50 text-amber-700',
+                    link: undefined,
+                    linkLabel: undefined,
+                    features: ['Timetable', 'Train Number']
+                  },
+                  { 
+                    title: 'MRTS', 
+                    desc: 'Beach to Velachery elevated rail. Fare: ₹5-₹15', 
+                    color: 'bg-purple-50 text-purple-700',
+                    link: undefined,
+                    linkLabel: undefined,
+                    features: undefined
+                  },
+                  { 
+                    title: 'MTC Bus', 
+                    desc: 'Metropolitan Transport Corp — covers all of Chennai. Fare: ₹5-₹30', 
+                    color: 'bg-green-50 text-green-700',
+                    link: undefined,
+                    linkLabel: undefined,
+                    features: ['Timetable', 'Bus Number']
+                  },
                 ].map((t) => (
-                  <div key={t.title} className={`p-4 rounded-xl ${t.color}`}>
+                  <div key={t.title} className={`p-4 rounded-xl flex flex-col ${t.color}`}>
                     <h4 className="font-bold text-sm">{t.title}</h4>
-                    <p className="text-xs mt-1 opacity-80">{t.desc}</p>
+                    <p className={`text-xs mt-1 opacity-80 ${t.link || t.features ? 'mb-2' : ''} flex-grow`}>{t.desc}</p>
+                    {t.link && (
+                      <a href={t.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-medium hover:underline mt-auto">
+                        {t.linkLabel} <ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
+                    {t.features && (
+                      <div className="flex flex-wrap gap-1.5 mt-auto">
+                        {t.features.map(f => (
+                          <span key={f} className="text-[10px] px-2 py-0.5 bg-black/10 rounded-full font-medium">{f}</span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
+              </div>
+            </Card>
+
+            {/* Timetables & Routes */}
+            <Card>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                <h3 className="text-lg font-bold">Timetables & Routes</h3>
+                <div className="flex gap-2 w-full sm:w-auto bg-surface p-1 rounded-xl">
+                  <button 
+                    onClick={() => setTimetableFilter('all')}
+                    className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors flex-1 sm:flex-none ${timetableFilter === 'all' ? 'bg-primary text-white shadow-sm' : 'text-text-muted hover:text-text-primary'}`}
+                  >All</button>
+                  <button 
+                    onClick={() => setTimetableFilter('mtc')}
+                    className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors flex-1 sm:flex-none ${timetableFilter === 'mtc' ? 'bg-green-600 text-white shadow-sm' : 'text-text-muted hover:text-text-primary'}`}
+                  >MTC</button>
+                  <button 
+                    onClick={() => setTimetableFilter('local_train')}
+                    className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors flex-1 sm:flex-none ${timetableFilter === 'local_train' ? 'bg-amber-500 text-white shadow-sm' : 'text-text-muted hover:text-text-primary'}`}
+                  >Local Train</button>
+                </div>
+              </div>
+              
+              <div className="mb-4">
+                <input 
+                  type="text" 
+                  placeholder="Search by route number, origin, or destination..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-border text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                />
+              </div>
+
+              <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
+                {filteredRoutes.length > 0 ? (
+                  filteredRoutes.map((route) => (
+                    <div key={route.id} className="p-4 rounded-xl border border-border bg-white hover:border-primary/30 transition-colors">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex items-center gap-2">
+                          <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-bold ${route.type === 'mtc' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-900'}`}>
+                            {route.type === 'mtc' ? <Bus className="w-3.5 h-3.5 mr-1" /> : <Train className="w-3.5 h-3.5 mr-1" />}
+                            {route.number}
+                          </span>
+                          <span className="text-xs font-medium text-text-muted bg-surface px-2 py-1 rounded">⏱ {route.duration}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 mb-4">
+                        <span className="text-sm font-bold text-text-primary">{route.from}</span>
+                        <Navigation className="w-3.5 h-3.5 text-primary rotate-90 flex-shrink-0" />
+                        <span className="text-sm font-bold text-text-primary">{route.to}</span>
+                      </div>
+                      
+                      <div className="bg-surface/50 p-3 rounded-lg border border-border/50">
+                        <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider mb-2 block">Timetable</span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {route.timetable.map((time, idx) => (
+                            <span key={idx} className={`text-xs px-2 py-1 rounded-md font-medium ${time.startsWith('Every') ? 'bg-primary/10 text-primary border border-primary/20' : 'bg-white border border-border text-text-primary'}`}>
+                              {time}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-text-muted bg-surface rounded-xl">
+                    <p className="text-sm">No routes found matching your search.</p>
+                  </div>
+                )}
               </div>
             </Card>
 
