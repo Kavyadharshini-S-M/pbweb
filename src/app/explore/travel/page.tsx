@@ -242,7 +242,7 @@ export default function TravelPage() {
                     color: 'bg-amber-50 text-amber-700',
                     link: undefined,
                     linkLabel: undefined,
-                    features: ['Timetable', 'Train Number']
+                    features: undefined
                   },
                   { 
                     title: 'MRTS', 
@@ -258,7 +258,7 @@ export default function TravelPage() {
                     color: 'bg-green-50 text-green-700',
                     link: undefined,
                     linkLabel: undefined,
-                    features: ['Timetable', 'Bus Number']
+                    features: undefined
                   },
                 ].map((t) => (
                   <div key={t.title} className={`p-4 rounded-xl flex flex-col ${t.color}`}>
