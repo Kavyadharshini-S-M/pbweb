@@ -260,7 +260,7 @@ export default function TravelPage() {
                     linkLabel: undefined,
                     features: undefined
                   },
-                ].map((t) => (
+                ].map((t: { title: string; desc: string; color: string; link?: string; linkLabel?: string; features?: string[] }) => (
                   <div key={t.title} className={`p-4 rounded-xl flex flex-col ${t.color}`}>
                     <h4 className="font-bold text-sm">{t.title}</h4>
                     <p className={`text-xs mt-1 opacity-80 ${t.link || t.features ? 'mb-2' : ''} flex-grow`}>{t.desc}</p>
