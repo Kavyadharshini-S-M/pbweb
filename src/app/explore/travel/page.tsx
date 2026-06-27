@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { MapPin, Navigation, Bus, Train, Car, Bike, ExternalLink, Loader2, AlertCircle, Download, Search, Megaphone, Map } from 'lucide-react';
+import { MapPin, Navigation, Bus, Train, Car, Bike, ExternalLink, Loader2, AlertCircle, Download, Search, Megaphone, Map, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/Badge';
@@ -27,6 +27,21 @@ const cabApps = [
   { name: 'Google Maps', url: 'https://maps.google.com', color: 'bg-blue-100 text-blue-700' },
 ];
 
+const POPULAR_MTC_ROUTES = [
+  { no: '21G', from: 'Broadway', to: 'Tambaram', freq: 'Every 10 mins', first: '05:00 AM', last: '10:20 PM' },
+  { no: '570', from: 'CMBT', to: 'Kelambakkam', freq: 'Every 15 mins', first: '05:15 AM', last: '09:50 PM' },
+  { no: '19B', from: 'Saidapet', to: 'Kelambakkam', freq: 'Every 20 mins', first: '05:30 AM', last: '10:00 PM' },
+  { no: 'A1', from: 'Central', to: 'Thiruvanmiyur', freq: 'Every 12 mins', first: '05:40 AM', last: '09:30 PM' },
+  { no: '102', from: 'Broadway', to: 'Kelambakkam', freq: 'Every 20 mins', first: '05:00 AM', last: '09:00 PM' },
+];
+
+const LOCAL_TRAIN_ROUTES = [
+  { line: 'South Line', route: 'Chennai Beach - Tambaram - Chengalpattu', freq: '10-15 mins', first: '04:00 AM', last: '11:59 PM', type: 'Suburban' },
+  { line: 'MRTS', route: 'Chennai Beach - Velachery', freq: '20 mins', first: '05:00 AM', last: '11:00 PM', type: 'Elevated' },
+  { line: 'West Line', route: 'Chennai Central - Arakkonam', freq: '20-30 mins', first: '03:50 AM', last: '11:15 PM', type: 'Suburban' },
+  { line: 'North Line', route: 'Chennai Central - Gummidipoondi', freq: '30 mins', first: '04:15 AM', last: '10:45 PM', type: 'Suburban' },
+];
+
 export default function TravelPage() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
@@ -36,6 +51,7 @@ export default function TravelPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [routeResult, setRouteResult] = useState<RouteResponse | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [activeTimetableTab, setActiveTimetableTab] = useState<'mtc' | 'train'>('mtc');
 
   useEffect(() => {
     // Detect if user is on a mobile device to correctly format deep links
@@ -255,6 +271,88 @@ export default function TravelPage() {
                   </a>
                 ))}
               </div>
+            </Card>
+
+            {/* Popular Routes & Timetables */}
+            <Card>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <h3 className="text-lg font-bold">Popular Routes & Timetables</h3>
+                <div className="flex bg-surface rounded-lg p-1 border border-border">
+                  <button 
+                    onClick={() => setActiveTimetableTab('mtc')}
+                    className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-all ${activeTimetableTab === 'mtc' ? 'bg-white shadow-sm text-green-700' : 'text-text-muted hover:text-text-primary'}`}
+                  >
+                    <Bus className="w-4 h-4" /> MTC Bus
+                  </button>
+                  <button 
+                    onClick={() => setActiveTimetableTab('train')}
+                    className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-all ${activeTimetableTab === 'train' ? 'bg-white shadow-sm text-amber-700' : 'text-text-muted hover:text-text-primary'}`}
+                  >
+                    <Train className="w-4 h-4" /> Local Train
+                  </button>
+                </div>
+              </div>
+
+              {activeTimetableTab === 'mtc' && (
+                <div className="space-y-3">
+                  {POPULAR_MTC_ROUTES.map((route, i) => (
+                    <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl border border-border bg-white hover:border-green-200 hover:bg-green-50/30 transition-colors gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-green-100 text-green-700 rounded-lg flex items-center justify-center font-bold text-lg shrink-0">
+                          {route.no}
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-sm text-text-primary flex items-center gap-1.5">
+                            {route.from} <Navigation className="w-3 h-3 text-text-muted" /> {route.to}
+                          </h4>
+                          <p className="text-xs text-text-muted mt-1 flex items-center gap-1">
+                            <Clock className="w-3 h-3" /> Frequency: {route.freq}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right sm:text-left flex sm:flex-col gap-2 sm:gap-0 justify-between items-center sm:items-end bg-surface sm:bg-transparent p-2 sm:p-0 rounded-lg">
+                        <span className="text-xs text-text-muted">First: <span className="font-medium text-text-primary">{route.first}</span></span>
+                        <span className="text-xs text-text-muted">Last: <span className="font-medium text-text-primary">{route.last}</span></span>
+                      </div>
+                    </div>
+                  ))}
+                  <p className="text-xs text-text-muted text-center mt-4">Note: Timings are approximate and subject to traffic conditions.</p>
+                </div>
+              )}
+
+              {activeTimetableTab === 'train' && (
+                <div className="space-y-3">
+                  {LOCAL_TRAIN_ROUTES.map((route, i) => (
+                    <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl border border-border bg-white hover:border-amber-200 hover:bg-amber-50/30 transition-colors gap-3">
+                      <div className="flex items-start sm:items-center gap-3">
+                        <div className="w-10 h-10 bg-amber-100 text-amber-700 rounded-lg flex items-center justify-center shrink-0">
+                          <Train className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-bold text-sm text-text-primary">{route.line}</h4>
+                            <Badge variant="outline" className="text-[10px] h-4 px-1.5 bg-amber-50 border-amber-200 text-amber-700">{route.type}</Badge>
+                          </div>
+                          <p className="text-xs text-text-primary font-medium">{route.route}</p>
+                          <p className="text-xs text-text-muted mt-1 flex items-center gap-1">
+                            <Clock className="w-3 h-3" /> Freq: {route.freq}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right sm:text-left flex sm:flex-col gap-2 sm:gap-0 justify-between items-center sm:items-end bg-surface sm:bg-transparent p-2 sm:p-0 rounded-lg">
+                        <span className="text-xs text-text-muted">First: <span className="font-medium text-text-primary">{route.first}</span></span>
+                        <span className="text-xs text-text-muted">Last: <span className="font-medium text-text-primary">{route.last}</span></span>
+                      </div>
+                    </div>
+                  ))}
+                  <div className="flex justify-between items-center mt-4 pt-4 border-t border-border">
+                    <p className="text-xs text-text-muted">Timings may vary on Sundays and public holidays.</p>
+                    <a href="https://play.google.com/store/apps/details?id=com.whereismytrain.android" target="_blank" rel="noopener noreferrer" className="text-xs text-primary font-medium flex items-center gap-1 hover:underline">
+                      Get Train App <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                </div>
+              )}
             </Card>
           </div>
 
